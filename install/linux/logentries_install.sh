@@ -105,6 +105,18 @@ else
 	INSTALL_CURL=1
 fi
 
+while getopts ":a:q" opt; do
+  case $opt in
+    a)
+      LE_ACCOUNT_KEY=$OPTARG
+      ;;
+    q)
+      echo "Running in quiet mode"
+      QUIETMODE="true"
+      ;;
+  esac
+done
+
 printf "***** Step 1 of 3 - Beginning Logentries Installation *****\n"
 
 if [ -f /etc/issue ] && grep "Amazon Linux AMI" /etc/issue -q; then
@@ -289,36 +301,41 @@ if [ $FOUND == "1" ]; then
 
 	printf "***** Step 3 of 3 - Additional Logs *****\n"
 
-	FILES_FOUND=0
+	if [[ -z "$QUIETMODE" ]];then
 
-	for x in "${LOGS_TO_FOLLOW[@]}"
-	do
-		if [ -f $x ]; then
-			let FILES_FOUND=FILES_FOUND+1
-		fi
-	done
-
-	printf "$FILES_FOUND additional logs found.\n"
-	read -p "Would you like to monitor all of these too? (n) allows you to choose individual logs...(y) or (n): "
-	printf "\n\n"
-	if [[ $REPLY =~ ^[Yy]$ ]];then
-		printf "Monitoring all logs\n"
-		for j in "${LOGS_TO_FOLLOW[@]}"
-		do
-			$FOLLOW_CMD $j >/tmp/LogentriesDebug 2>&1
-			printf "."
-		done
-		printf "\n"
+	    FILES_FOUND=0
+    
+	    for x in "${LOGS_TO_FOLLOW[@]}"
+	    do
+	    	if [ -f $x ]; then
+	    		let FILES_FOUND=FILES_FOUND+1
+	    	fi
+	    done
+    
+	    printf "$FILES_FOUND additional logs found.\n"
+	    read -p "Would you like to monitor all of these too? (n) allows you to choose individual logs...(y) or (n): "
+	    printf "\n\n"
+	    if [[ $REPLY =~ ^[Yy]$ ]];then
+	    	printf "Monitoring all logs\n"
+	    	for j in "${LOGS_TO_FOLLOW[@]}"
+	    	do
+	    		$FOLLOW_CMD $j >/tmp/LogentriesDebug 2>&1
+	    		printf "."
+	    	done
+	    	printf "\n"
+	    else
+	    	for j in "${LOGS_TO_FOLLOW[@]}"
+	    	do
+	    		if [ -f $j ]; then
+	    			read -p "Would you like to monitor $j ?..(y) or (n): "
+	    			if [[ $REPLY =~ ^[Yy]$ ]]; then
+	    				$FOLLOW_CMD $j >/tmp/LogentriesDebug 2>&1
+	    			fi
+	    		fi
+	    	done
+	fi
 	else
-		for j in "${LOGS_TO_FOLLOW[@]}"
-		do
-			if [ -f $j ]; then
-				read -p "Would you like to monitor $j ?..(y) or (n): "
-				if [[ $REPLY =~ ^[Yy]$ ]]; then
-					$FOLLOW_CMD $j >/tmp/LogentriesDebug 2>&1
-				fi
-			fi
-		done
+		echo "No logs followed"
 	fi
 	$DAEMON_RESTART_CMD >/tmp/logentriesDebug 2>&1
 	printf "\n\n"

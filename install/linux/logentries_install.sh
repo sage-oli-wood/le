@@ -105,6 +105,14 @@ else
 	INSTALL_CURL=1
 fi
 
+while getopts ":a:" opt; do
+  case $opt in
+    a)
+      $LE_ACCOUNT_KEY=$OPTARG
+      ;;
+  esac
+done
+
 printf "***** Step 1 of 3 - Beginning Logentries Installation *****\n"
 
 if [ -f /etc/issue ] && grep "Amazon Linux AMI" /etc/issue -q; then

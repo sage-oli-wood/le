@@ -108,7 +108,7 @@ fi
 while getopts ":a:" opt; do
   case $opt in
     a)
-      $LE_ACCOUNT_KEY=$OPTARG
+      LE_ACCOUNT_KEY=$OPTARG
       ;;
   esac
 done
